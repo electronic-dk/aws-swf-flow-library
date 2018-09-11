@@ -62,6 +62,8 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
 
     private boolean initialized;
 
+    private int sdkRequestTimeout = -1;
+
     public SynchronousActivityTaskPoller(AmazonSimpleWorkflow service, String domain, String taskListToPoll,
             ActivityImplementationFactory activityImplementationFactory) {
         this();
@@ -138,6 +140,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         pollRequest.setDomain(domain);
         pollRequest.setIdentity(identity);
         pollRequest.setTaskList(new TaskList().withName(taskListToPoll));
+        pollRequest.setSdkRequestTimeout(sdkRequestTimeout);
         if (log.isDebugEnabled()) {
             log.debug("poll request begin: " + pollRequest);
         }
@@ -379,5 +382,13 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
     @Override
     public boolean isSuspended() {
         return false;
+    }
+
+    public int getSdkRequestTimeout() {
+        return sdkRequestTimeout;
+    }
+
+    public void setSdkRequestTimeout(int sdkRequestTimeout) {
+        this.sdkRequestTimeout = sdkRequestTimeout;
     }
 }

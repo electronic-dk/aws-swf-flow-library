@@ -18,6 +18,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorker;
 import org.springframework.context.SmartLifecycle;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
@@ -46,6 +47,11 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
 
     public SpringActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
         genericWorker = new GenericActivityWorker(service, domain, taskListToPoll);
+        genericWorker.setActivityImplementationFactory(factory);
+    }
+
+    public SpringActivityWorker(GenericActivityWorker genericWorker) {
+        this.genericWorker = genericWorker;
         genericWorker.setActivityImplementationFactory(factory);
     }
     

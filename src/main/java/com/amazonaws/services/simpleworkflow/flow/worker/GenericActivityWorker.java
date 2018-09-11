@@ -14,10 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,6 +41,8 @@ public class GenericActivityWorker extends GenericWorker {
     private ActivityImplementationFactory activityImplementationFactory;
 
     private int taskExecutorThreadPoolSize = 100;
+
+    private int sdkRequestTimeout = -1;
 
     public GenericActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
         super(service, domain, taskListToPoll);
@@ -96,11 +95,12 @@ public class GenericActivityWorker extends GenericWorker {
         ThreadPoolExecutor tasksExecutor = new ThreadPoolExecutor(1, taskExecutorThreadPoolSize, 1, TimeUnit.MINUTES,
                 new SynchronousQueue<Runnable>());
         tasksExecutor.setThreadFactory(new ExecutorThreadFactory(ACTIVITY_THREAD_NAME_PREFIX + " " + getTaskListToPoll() + " "));
-        tasksExecutor.setRejectedExecutionHandler(new BlockCallerPolicy());
+        tasksExecutor.setRejectedExecutionHandler(createRejectedExecutionHandler());
         ActivityTaskPoller activityTaskPoller = new ActivityTaskPoller(service, domain, getTaskListToPoll(),
                 activityImplementationFactory, tasksExecutor);
         activityTaskPoller.setIdentity(getIdentity());
         activityTaskPoller.setUncaughtExceptionHandler(uncaughtExceptionHandler);
+        activityTaskPoller.setSdkRequestTimeout(sdkRequestTimeout);
         return activityTaskPoller;
     }
 
@@ -166,4 +166,15 @@ public class GenericActivityWorker extends GenericWorker {
         checkRequiredProperty(activityImplementationFactory, "activityImplementationFactory");
     }
 
+    protected RejectedExecutionHandler createRejectedExecutionHandler() {
+        return new BlockCallerPolicy();
+    }
+
+    public int getSdkRequestTimeout() {
+        return sdkRequestTimeout;
+    }
+
+    public void setSdkRequestTimeout(int sdkRequestTimeout) {
+        this.sdkRequestTimeout = sdkRequestTimeout;
+    }
 }
